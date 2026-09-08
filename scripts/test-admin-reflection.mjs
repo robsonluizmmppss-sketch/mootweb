@@ -118,18 +118,21 @@ async function main() {
 
   // ---- ProcessStep (home Processo) ----
   {
-    let step = await prisma.processStep.findFirst({ orderBy: { order: "asc" } });
+    const step = await prisma.processStep.findFirst({ orderBy: { order: "asc" } });
     if (!step) {
-      step = await prisma.processStep.create({
-        data: { title: "Descoberta", description: "orig", order: 0, icon: "Compass" },
-      });
+      results.push("⚠   Processo · sem etapas cadastradas (pulado)");
+    } else {
+      await check(
+        "Processo · title",
+        "/",
+        () => prisma.processStep.update({ where: { id: step.id }, data: { title: `${TAG} etapa` } }),
+        () =>
+          prisma.processStep.update({
+            where: { id: step.id },
+            data: { title: step.title, description: step.description },
+          }),
+      );
     }
-    await check(
-      "Processo · title",
-      "/",
-      () => prisma.processStep.update({ where: { id: step.id }, data: { title: `${TAG} etapa` } }),
-      () => prisma.processStep.update({ where: { id: step.id }, data: { title: step.title } }),
-    );
   }
 
   // ---- FaqItem (home FAQ) ----

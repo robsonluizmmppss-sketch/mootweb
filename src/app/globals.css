@@ -68,12 +68,16 @@
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    /* Rede de segurança contra estouro horizontal em telas muito estreitas
+       (não cria container de scroll — ao contrário de overflow-x: hidden). */
+    overflow-x: clip;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
     text-rendering: optimizeLegibility;
+    overflow-x: clip;
   }
 
   ::selection {

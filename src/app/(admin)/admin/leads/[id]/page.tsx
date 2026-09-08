@@ -48,7 +48,7 @@ export default async function LeadDetailPage({
         />
       </PageHeader>
 
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_1fr]">
         <form action={updateLead} className="card-premium grid gap-4 rounded-2xl p-6 sm:grid-cols-2">
           <input type="hidden" name="id" value={lead.id} />
           <div className="space-y-2">

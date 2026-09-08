@@ -5,8 +5,8 @@ import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Accordion CSS-only (grid-template-rows: 0fr → 1fr).
- * Sem dependência de animação por requestAnimationFrame.
+ * Accordion controlado — abre/fecha sem depender de truque de CSS.
+ * Conteúdo é montado condicionalmente (à prova de qualquer conflito de estilo).
  */
 
 interface AccordionContextValue {
@@ -63,18 +63,18 @@ export function AccordionItem({
   const isOpen = ctx.open.includes(value);
 
   return (
-    <div className="py-2">
+    <div className="py-1.5">
       <h3>
         <button
           type="button"
           onClick={() => ctx.toggle(value)}
           aria-expanded={isOpen}
-          className="flex w-full items-center justify-between gap-4 py-5 text-left text-base font-medium text-foreground transition-colors hover:text-accent"
+          className="flex w-full items-center justify-between gap-3 py-5 text-left text-sm font-medium text-foreground transition-colors hover:text-accent sm:text-base"
         >
           <span className="text-pretty">{question}</span>
           <span
             className={cn(
-              "grid size-8 shrink-0 place-items-center rounded-full border border-white/10 bg-white/5 transition-transform duration-300",
+              "grid size-7 shrink-0 place-items-center rounded-full border border-white/10 bg-white/5 transition-transform duration-300 sm:size-8",
               isOpen && "rotate-45 border-primary/40 bg-primary/10 text-accent",
             )}
           >
@@ -82,18 +82,11 @@ export function AccordionItem({
           </span>
         </button>
       </h3>
-      <div
-        className={cn(
-          "grid transition-[grid-template-rows] duration-300 ease-out",
-          isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-        )}
-      >
-        <div className="overflow-hidden">
-          <div className="pb-6 pr-12 text-sm leading-relaxed text-muted-foreground">
-            {children}
-          </div>
+      {isOpen && (
+        <div className="animate-fade-up pb-6 pr-8 text-sm leading-relaxed text-muted-foreground">
+          {children}
         </div>
-      </div>
+      )}
     </div>
   );
 }

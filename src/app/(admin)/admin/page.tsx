@@ -64,7 +64,7 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="card-premium rounded-2xl p-6 lg:col-span-2">
           <h2 className="text-sm font-semibold">Atividade — últimos 14 dias</h2>
           <p className="text-xs text-muted-foreground">Leads, orçamentos e mensagens por dia.</p>
@@ -81,7 +81,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="card-premium rounded-2xl p-6 lg:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold">Atividade recente</h2>

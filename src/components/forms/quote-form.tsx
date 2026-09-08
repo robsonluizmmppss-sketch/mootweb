@@ -240,26 +240,29 @@ export function QuoteForm() {
       </div>
 
       {/* nav */}
-      <div className="mt-8 flex items-center justify-between">
+      <div className="mt-8 flex flex-wrap items-center gap-3">
         <Button
           type="button"
           variant="ghost"
+          size="sm"
           onClick={() => setStep((s) => Math.max(0, s - 1))}
           disabled={step === 0}
         >
           <ArrowLeft className="size-4" /> Voltar
         </Button>
 
-        {step < STEPS.length - 1 ? (
-          <Button type="button" variant="gradient" onClick={() => setStep((s) => s + 1)}>
-            Continuar <ArrowRight className="size-4" />
-          </Button>
-        ) : (
-          <Button type="submit" variant="gradient" size="lg" disabled={pending || uploading}>
-            {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-            Enviar briefing
-          </Button>
-        )}
+        <div className="ml-auto">
+          {step < STEPS.length - 1 ? (
+            <Button type="button" variant="gradient" onClick={() => setStep((s) => s + 1)}>
+              Continuar <ArrowRight className="size-4" />
+            </Button>
+          ) : (
+            <Button type="submit" variant="gradient" disabled={pending || uploading}>
+              {pending ? <Loader2 className="size-4 animate-spin" /> : null}
+              Enviar briefing
+            </Button>
+          )}
+        </div>
       </div>
     </form>
   );

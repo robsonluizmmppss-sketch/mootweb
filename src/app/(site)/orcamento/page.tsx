@@ -25,7 +25,7 @@ export default function OrcamentoPage() {
         description="Quanto mais contexto, melhor a estimativa. Leva ~3 minutos."
       />
 
-      <div className="mx-auto mt-16 grid max-w-5xl gap-8 lg:grid-cols-[1fr_1.6fr]">
+      <div className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-8 lg:grid-cols-[1fr_1.6fr]">
         <ul className="space-y-4">
           {PERKS.map((p) => (
             <li key={p.title} className="card-premium rounded-2xl p-5">

@@ -22,7 +22,7 @@ export default async function ContatoPage() {
         description="Respondemos em até 1 dia útil. Para orçamentos, use o formulário dedicado."
       />
 
-      <div className="mx-auto mt-16 grid max-w-5xl gap-8 lg:grid-cols-[1fr_1.4fr]">
+      <div className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-8 lg:grid-cols-[1fr_1.4fr]">
         <div className="space-y-4">
           {s.email && (
             <a

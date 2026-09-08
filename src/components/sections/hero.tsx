@@ -16,7 +16,7 @@ export function Hero({ content }: { content: HeroContent }) {
   return (
     <section className="relative overflow-hidden pt-36 sm:pt-44">
       <div className="container">
-        <div className="grid items-center gap-16 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-[1.05fr_0.95fr]">
           {/* ---- Copy ---- */}
           <div>
             <span className="pill animate-fade-up" style={{ animationDelay: "0.05s" }}>

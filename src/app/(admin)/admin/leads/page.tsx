@@ -43,7 +43,7 @@ export default async function LeadsPage() {
           description="Leads entram automaticamente pelos formulários de contato e orçamento."
         />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
           {COLUMNS.map((col) => {
             const items = byStatus(col.key);
             return (

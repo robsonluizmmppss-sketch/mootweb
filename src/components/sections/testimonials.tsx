@@ -15,7 +15,7 @@ export function Testimonials({ items }: { items: TestimonialItem[] }) {
         highlight="quem já construiu com a gente."
       />
 
-      <RevealGroup className="mt-16 grid gap-4 md:grid-cols-3">
+      <RevealGroup className="mt-16 grid grid-cols-1 gap-4 md:grid-cols-3">
         {items.map((t) => (
           <RevealItem key={t.authorName}>
             <figure className="card-premium flex h-full flex-col rounded-2xl p-8">

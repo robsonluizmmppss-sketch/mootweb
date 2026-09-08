@@ -37,13 +37,16 @@ export function Footer({
       <div className="container py-16">
         {/* CTA final do rodapé */}
         {settings.footerHeadline && (
-          <div className="card-premium mb-16 flex flex-col items-start gap-6 rounded-3xl p-8 sm:flex-row sm:items-center sm:justify-between sm:p-12">
-            <h2 className="max-w-xl text-balance text-2xl font-semibold tracking-tight sm:text-3xl">
+          <div className="card-premium mb-16 flex flex-col items-start gap-6 rounded-3xl p-6 sm:flex-row sm:items-center sm:justify-between sm:p-12">
+            <h2 className="max-w-xl text-balance text-xl font-semibold tracking-tight sm:text-3xl">
               {settings.footerHeadline}
             </h2>
             <Link
               href="/orcamento"
-              className={cn(buttonVariants({ variant: "gradient", size: "lg" }))}
+              className={cn(
+                buttonVariants({ variant: "gradient", size: "lg" }),
+                "w-full shrink-0 sm:w-auto",
+              )}
             >
               Solicitar orçamento
               <ArrowUpRight />
@@ -51,7 +54,7 @@ export function Footer({
           </div>
         )}
 
-        <div className="grid gap-12 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div>
             <Logo
               brandName={settings.brandName}
