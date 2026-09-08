@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { LogoMark } from "@/components/shared/logo";
 
 export function AuthShell({
   title,
@@ -18,12 +17,14 @@ export function AuthShell({
       <div className="pointer-events-none absolute left-1/2 top-0 h-[30rem] w-[30rem] -translate-x-1/2 rounded-full bg-primary/20 blur-[150px]" />
 
       <div className="relative w-full max-w-sm">
-        <Link href="/" className="mx-auto flex w-fit items-center gap-2.5">
-          <LogoMark className="h-9 w-9" />
-          <span className="text-lg font-semibold tracking-tight">
-            Moot<span className="text-accent">Web</span>
-            <span className="text-accent">.</span>
-          </span>
+        <Link href="/" className="mx-auto flex w-fit items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/mootweb-logo.png"
+            alt="MootWeb"
+            className="h-9 w-auto select-none"
+            draggable={false}
+          />
         </Link>
 
         <div className="glass-strong mt-8 rounded-3xl p-8">

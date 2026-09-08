@@ -48,12 +48,19 @@ export function Sidebar({ role }: { role: Role }) {
       )}
     >
       <div className="flex h-16 items-center gap-2 border-b border-white/10 px-4">
-        <LogoMark className="size-8 shrink-0" />
-        {!collapsed && (
-          <span className="text-sm font-semibold tracking-tight">
-            Moot<span className="text-accent">Web</span>
-            <span className="text-muted-foreground"> · Painel</span>
-          </span>
+        {collapsed ? (
+          <LogoMark className="size-8 shrink-0" />
+        ) : (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/mootweb-logo.png"
+              alt="MootWeb"
+              className="h-7 w-auto select-none"
+              draggable={false}
+            />
+            <span className="text-xs font-medium text-muted-foreground">· Painel</span>
+          </>
         )}
       </div>
 

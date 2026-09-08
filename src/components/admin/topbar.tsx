@@ -113,7 +113,16 @@ export function Topbar({ user }: { user: TopbarUser }) {
           />
           <div className="absolute inset-y-0 left-0 w-72 overflow-y-auto border-r border-white/10 bg-moot-deep p-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold">MootWeb · Painel</span>
+              <span className="flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/brand/mootweb-logo.png"
+                  alt="MootWeb"
+                  className="h-6 w-auto select-none"
+                  draggable={false}
+                />
+                <span className="text-xs font-medium text-muted-foreground">· Painel</span>
+              </span>
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
