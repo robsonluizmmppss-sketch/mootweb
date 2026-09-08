@@ -1,0 +1,336 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   MootWeb — Design System (tokens + utilitários)
+   Paleta: #050816 #081120 #0F172A #2563EB #3B82F6 #60A5FA #FFFFFF
+   ========================================================================== */
+
+@layer base {
+  :root {
+    /* Light — usado quando o usuário força tema claro */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;            /* #2563EB */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 214 32% 91%;
+    --muted-foreground: 215 16% 42%;
+    --accent: 213 94% 68%;             /* #60A5FA */
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 32% 88%;
+    --input: 214 32% 88%;
+    --ring: 221 83% 53%;
+    --radius: 0.9rem;
+
+    /* --font-sans e --font-mono são injetados por next/font (ver layout.tsx);
+       aqui só definimos o alias de display e um fallback caso não carreguem. */
+    --font-display: var(--font-sans, ui-sans-serif), system-ui, sans-serif;
+  }
+
+  .dark {
+    /* Dark — tema padrão da marca */
+    --background: 226 57% 5%;          /* ~#050816 */
+    --foreground: 210 40% 98%;
+    --card: 217 55% 8%;               /* ~#081120 */
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 7%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 221 83% 53%;            /* #2563EB */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 47% 14%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 222 40% 13%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 91% 60%;            /* #3B82F6 */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 63% 45%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 216 34% 17%;
+    --input: 216 34% 20%;
+    --ring: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: hsl(217 91% 60% / 0.28);
+    color: hsl(210 40% 98%);
+  }
+
+  /* Scrollbar futurista */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(216 34% 22%);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(217 91% 60% / 0.6);
+    background-clip: content-box;
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* --- Superfície de vidro (glassmorphism) --- */
+  .glass {
+    @apply border border-white/10 bg-white/[0.04] backdrop-blur-xl;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
+      0 20px 60px -20px rgba(0, 0, 0, 0.6);
+  }
+  .glass-strong {
+    @apply border border-white/15 bg-white/[0.07] backdrop-blur-2xl;
+  }
+
+  /* --- Card premium com borda em gradiente --- */
+  .card-premium {
+    position: relative;
+    border-radius: var(--radius);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .card-premium::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      140deg,
+      rgba(96, 165, 250, 0.5),
+      rgba(37, 99, 235, 0) 40%,
+      rgba(37, 99, 235, 0) 60%,
+      rgba(96, 165, 250, 0.25)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .card-premium:hover::before {
+    opacity: 1;
+  }
+
+  /* --- Texto com gradiente de marca --- */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      92deg,
+      #ffffff 0%,
+      #93c5fd 45%,
+      #3b82f6 100%
+    );
+  }
+  .text-gradient-blue {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(92deg, #60a5fa, #2563eb);
+  }
+
+  /* --- Glow azul --- */
+  .glow-ring {
+    box-shadow:
+      0 0 0 1px rgba(59, 130, 246, 0.15),
+      0 8px 40px -8px rgba(37, 99, 235, 0.45);
+  }
+
+  /* --- Linha futurista / divisor --- */
+  .hairline {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(96, 165, 250, 0.4),
+      transparent
+    );
+  }
+
+  /* --- Badge de pill translúcida --- */
+  .pill {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur;
+  }
+}
+
+@layer utilities {
+  /* Grid tecnológico de fundo */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(96, 165, 250, 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(96, 165, 250, 0.06) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+  .bg-grid-fade {
+    -webkit-mask-image: radial-gradient(
+      ellipse 70% 60% at 50% 0%,
+      #000 60%,
+      transparent 100%
+    );
+    mask-image: radial-gradient(
+      ellipse 70% 60% at 50% 0%,
+      #000 60%,
+      transparent 100%
+    );
+  }
+
+  .mask-b {
+    -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+    mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  }
+
+  /* Anima gradiente de contorno em hover */
+  .animate-border-shine {
+    background-size: 200% 200%;
+    animation: border-shine 3s linear infinite;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Respeita usuários que preferem menos movimento */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@keyframes border-shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Reveal ao rolar (CSS puro — ver src/components/shared/reveal.tsx)
+   Estado de repouso levemente oculto; [data-shown] revela.
+   -------------------------------------------------------------------------- */
+.reveal {
+  opacity: 0;
+  transform: var(--reveal-from, translateY(24px));
+  filter: blur(6px);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0s);
+}
+.reveal[data-shown] {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+}
+
+.reveal-item {
+  opacity: 0;
+  transform: translateY(20px);
+  filter: blur(6px);
+  transition:
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-group[data-shown] .reveal-item {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+}
+/* stagger dos filhos */
+.reveal-group[data-shown] .reveal-item:nth-child(1) { transition-delay: calc(var(--reveal-stagger, 0.08s) * 0); }
+.reveal-group[data-shown] .reveal-item:nth-child(2) { transition-delay: calc(var(--reveal-stagger, 0.08s) * 1); }
+.reveal-group[data-shown] .reveal-item:nth-child(3) { transition-delay: calc(var(--reveal-stagger, 0.08s) * 2); }
+.reveal-group[data-shown] .reveal-item:nth-child(4) { transition-delay: calc(var(--reveal-stagger, 0.08s) * 3); }
+.reveal-group[data-shown] .reveal-item:nth-child(5) { transition-delay: calc(var(--reveal-stagger, 0.08s) * 4); }
+.reveal-group[data-shown] .reveal-item:nth-child(6) { transition-delay: calc(var(--reveal-stagger, 0.08s) * 5); }
+.reveal-group[data-shown] .reveal-item:nth-child(7) { transition-delay: calc(var(--reveal-stagger, 0.08s) * 6); }
+.reveal-group[data-shown] .reveal-item:nth-child(n + 8) { transition-delay: calc(var(--reveal-stagger, 0.08s) * 7); }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-item {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+}
+
+/* --- Marquee de logos --- */
+.marquee {
+  --gap: 4rem;
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 12%,
+    #000 88%,
+    transparent
+  );
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.marquee__track {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  padding-right: var(--gap);
+  min-width: 100%;
+  flex-shrink: 0;
+  animation: marquee 32s linear infinite;
+}
+.marquee:hover .marquee__track {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  to {
+    transform: translateX(calc(-100% - var(--gap)));
+  }
+}

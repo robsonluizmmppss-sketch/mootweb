@@ -1,0 +1,837 @@
+// ============================================================================
+//  MootWeb — Prisma Schema
+//  Banco: PostgreSQL 16  |  ORM: Prisma 6
+//  Filosofia: "tudo editável pelo painel" — quase nenhum conteúdo é fixo.
+//  Fase 1 usa os modelos de conteúdo/SEO/site. Auth, CRM e uploads entram
+//  nas fases seguintes, mas já ficam modelados aqui para evitar migrations
+//  quebradas no futuro.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // Runtime: conexão "pooled" (Supabase pgbouncer :6543) — serverless-friendly.
+  url       = env("DATABASE_URL")
+  // Migrations / introspecção: conexão direta (Supabase :5432).
+  // Em dev local os dois apontam para o mesmo Postgres embutido.
+  directUrl = env("DIRECT_URL")
+}
+
+// ----------------------------------------------------------------------------
+//  ENUMS
+// ----------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum PublishStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  NEGOTIATING
+  WON
+  LOST
+}
+
+enum MessageStatus {
+  UNREAD
+  READ
+  REPLIED
+  ARCHIVED
+}
+
+enum QuoteStatus {
+  RECEIVED
+  REVIEWING
+  QUOTED
+  ACCEPTED
+  DECLINED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  PDF
+  SVG
+  OTHER
+}
+
+enum BannerPlacement {
+  TOPBAR
+  HERO
+  INLINE
+  FOOTER
+}
+
+enum PopupTrigger {
+  ON_LOAD
+  ON_DELAY
+  ON_SCROLL
+  ON_EXIT_INTENT
+}
+
+enum CtaVariant {
+  PRIMARY
+  SECONDARY
+  GHOST
+  GRADIENT
+}
+
+// ----------------------------------------------------------------------------
+//  AUTENTICAÇÃO (NextAuth / Auth.js) — usada a partir da Fase 2
+// ----------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role          Role      @default(VIEWER)
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts            Account[]
+  sessions            Session[]
+  passwordResetTokens PasswordResetToken[]
+  activityLogs        ActivityLog[]
+  authoredPosts       Post[]               @relation("PostAuthor")
+  teamProfile         TeamMember?
+
+  @@index([role])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expires   DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ----------------------------------------------------------------------------
+//  CONFIGURAÇÕES GLOBAIS DO SITE (singleton, id = "singleton")
+// ----------------------------------------------------------------------------
+
+model SiteSettings {
+  id                String  @id @default("singleton")
+  brandName         String  @default("MootWeb")
+  tagline           String  @default("Engenharia digital premium")
+  logoLightUrl      String?
+  logoDarkUrl       String?
+  faviconUrl        String?
+  ogImageUrl        String?
+
+  // Contato
+  email             String?
+  phone             String?
+  whatsapp          String?
+  addressLine       String?
+  city              String?
+  state             String?
+  country           String? @default("Brasil")
+  mapEmbedUrl       String?
+
+  // Redes sociais
+  instagramUrl      String?
+  linkedinUrl       String?
+  githubUrl         String?
+  twitterUrl        String?
+  youtubeUrl        String?
+  behanceUrl        String?
+  dribbbleUrl       String?
+
+  // Rodapé
+  footerHeadline    String?
+  footerText        String?
+  footerCopyright   String? @default("© {year} MootWeb. Todos os direitos reservados.")
+
+  // Tema / aparência (editável no painel)
+  themeMode         String  @default("dark") // dark | light | system
+  accentColor       String  @default("#2563EB")
+  radius            Float   @default(0.9)
+  enableParallax    Boolean @default(true)
+  enableGridBg      Boolean @default(true)
+
+  // Analytics / Pixels
+  gaId              String?
+  gtmId             String?
+  fbPixelId         String?
+  googleAdsId       String?
+
+  // Integrações
+  maintenanceMode   Boolean @default(false)
+  maintenanceText   String?
+
+  updatedAt         DateTime @updatedAt
+  createdAt         DateTime @default(now())
+}
+
+// ----------------------------------------------------------------------------
+//  CONTEÚDO DE PÁGINAS / SEÇÕES (blocos genéricos editáveis)
+// ----------------------------------------------------------------------------
+
+/// Cada seção de uma página (ex: home.hero, home.services) com payload JSON.
+model PageSection {
+  id        String   @id @default(cuid())
+  page      String   // "home", "about", "contact"...
+  key       String   // "hero", "trustBar", "process"...
+  name      String   // rótulo no painel
+  enabled   Boolean  @default(true)
+  order     Int      @default(0)
+  data      Json     // conteúdo tipado por key (título, subtítulo, itens...)
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@unique([page, key])
+  @@index([page, order])
+}
+
+/// Itens de menu (navbar / footer / admin), hierárquicos.
+model NavItem {
+  id        String    @id @default(cuid())
+  location  String    @default("header") // header | footer | legal | mobile
+  label     String
+  href      String
+  icon      String?
+  target    String?   @default("_self")
+  order     Int       @default(0)
+  enabled   Boolean   @default(true)
+  parentId  String?
+  parent    NavItem?  @relation("NavChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children  NavItem[] @relation("NavChildren")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([location, order])
+}
+
+// ----------------------------------------------------------------------------
+//  PORTFÓLIO / PROJETOS
+// ----------------------------------------------------------------------------
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  color       String?
+  icon        String?
+  order       Int       @default(0)
+  projects    Project[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Technology {
+  id        String           @id @default(cuid())
+  name      String           @unique
+  slug      String           @unique
+  iconUrl   String?
+  color     String?
+  order     Int              @default(0)
+  projects  ProjectTech[]
+  createdAt DateTime         @default(now())
+}
+
+model ProjectTech {
+  projectId    String
+  technologyId String
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  technology   Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, technologyId])
+}
+
+model Project {
+  id            String        @id @default(cuid())
+  title         String
+  slug          String        @unique
+  excerpt       String?
+  description   String?       @db.Text
+  objectives    String?       @db.Text
+  results       String?       @db.Text
+  coverUrl      String?
+  gallery       ProjectImage[]
+  videoUrl      String?
+
+  clientId      String?
+  client        Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  clientName    String?       // fallback quando não há Client cadastrado
+
+  categoryId    String?
+  category      Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  technologies  ProjectTech[]
+  tags          String[]      @default([])
+
+  liveUrl       String?
+  githubUrl     String?
+  behanceUrl    String?
+  dribbbleUrl   String?
+
+  status        PublishStatus @default(DRAFT)
+  featured      Boolean       @default(false)
+  recommended   Boolean       @default(false)
+  order         Int           @default(0)
+  deliveredAt   DateTime?
+  publishedAt   DateTime?
+
+  seo           SeoMeta?      @relation(fields: [seoId], references: [id])
+  seoId         String?       @unique
+
+  relatedFrom   ProjectRelation[] @relation("RelationSource")
+  relatedTo     ProjectRelation[] @relation("RelationTarget")
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([status, featured])
+  @@index([categoryId])
+}
+
+model ProjectImage {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  caption   String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([projectId, order])
+}
+
+/// Relação N:N "projetos relacionados" (direcional para permitir curadoria).
+model ProjectRelation {
+  id       String  @id @default(cuid())
+  sourceId String
+  targetId String
+  source   Project @relation("RelationSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  target   Project @relation("RelationTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, targetId])
+}
+
+// ----------------------------------------------------------------------------
+//  CLIENTES / DEPOIMENTOS / EQUIPE / PARCEIROS
+// ----------------------------------------------------------------------------
+
+model Client {
+  id         String    @id @default(cuid())
+  name       String
+  slug       String    @unique
+  logoUrl    String?
+  websiteUrl String?
+  segment    String?
+  featured   Boolean   @default(false)
+  order      Int       @default(0)
+  projects   Project[]
+  testimonials Testimonial[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Testimonial {
+  id         String   @id @default(cuid())
+  authorName String
+  role       String?
+  company    String?
+  avatarUrl  String?
+  quote      String   @db.Text
+  rating     Int      @default(5)
+  clientId   String?
+  client     Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  featured   Boolean  @default(false)
+  enabled    Boolean  @default(true)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model TeamMember {
+  id         String   @id @default(cuid())
+  name       String
+  slug       String   @unique
+  role       String
+  bio        String?  @db.Text
+  avatarUrl  String?
+  email      String?
+  linkedinUrl String?
+  githubUrl  String?
+  dribbbleUrl String?
+  order      Int      @default(0)
+  enabled    Boolean  @default(true)
+  userId     String?  @unique
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Partner {
+  id        String   @id @default(cuid())
+  name      String
+  logoUrl   String?
+  websiteUrl String?
+  tier      String?  @default("standard") // standard | gold | strategic
+  order     Int      @default(0)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ----------------------------------------------------------------------------
+//  SERVIÇOS / PROCESSO
+// ----------------------------------------------------------------------------
+
+model Service {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  summary     String?
+  description String?  @db.Text
+  icon        String?
+  imageUrl    String?
+  priceLabel  String?  // "sob consulta", "a partir de R$ 5.000"
+  ctaLabel    String?  @default("Solicitar orçamento")
+  ctaHref     String?  @default("/orcamento")
+  features    String[] @default([])
+  featured    Boolean  @default(false)
+  enabled     Boolean  @default(true)
+  order       Int      @default(0)
+  seoId       String?  @unique
+  seo         SeoMeta? @relation(fields: [seoId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ProcessStep {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  icon        String?
+  order       Int      @default(0)
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ----------------------------------------------------------------------------
+//  BLOG
+// ----------------------------------------------------------------------------
+
+model PostCategory {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  posts     Post[]
+  createdAt DateTime @default(now())
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  posts     PostTag[]
+  createdAt DateTime  @default(now())
+}
+
+model PostTag {
+  postId String
+  tagId  String
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+}
+
+model Post {
+  id           String        @id @default(cuid())
+  title        String
+  slug         String        @unique
+  excerpt      String?
+  content      Json          // documento do editor rico (blocos)
+  contentHtml  String?       @db.Text // render cacheado
+  coverUrl     String?
+  readingTime  Int?          // minutos
+  status       PublishStatus @default(DRAFT)
+  featured     Boolean       @default(false)
+  publishedAt  DateTime?
+
+  authorId     String?
+  author       User?         @relation("PostAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  categoryId   String?
+  category     PostCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  tags         PostTag[]
+  comments     Comment[]
+
+  seoId        String?       @unique
+  seo          SeoMeta?      @relation(fields: [seoId], references: [id])
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([status, publishedAt])
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  postId     String
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorName String
+  authorEmail String
+  content    String   @db.Text
+  approved   Boolean  @default(false)
+  parentId   String?
+  parent     Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    Comment[] @relation("CommentReplies")
+  createdAt  DateTime @default(now())
+
+  @@index([postId, approved])
+}
+
+// ----------------------------------------------------------------------------
+//  LANDING PAGES (construtor de blocos)
+// ----------------------------------------------------------------------------
+
+model LandingPage {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  status      PublishStatus @default(DRAFT)
+  blocks      Json          // array de blocos configuráveis
+  theme       Json?         // overrides de cor/tipografia
+  seoId       String?       @unique
+  seo         SeoMeta?      @relation(fields: [seoId], references: [id])
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+// ----------------------------------------------------------------------------
+//  FAQ
+// ----------------------------------------------------------------------------
+
+model FaqCategory {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  order     Int       @default(0)
+  items     FaqItem[]
+  createdAt DateTime  @default(now())
+}
+
+model FaqItem {
+  id         String       @id @default(cuid())
+  question   String
+  answer     String       @db.Text
+  categoryId String?
+  category   FaqCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  order      Int          @default(0)
+  enabled    Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([categoryId, order])
+}
+
+// ----------------------------------------------------------------------------
+//  ORÇAMENTOS / MENSAGENS / LEADS (CRM)
+// ----------------------------------------------------------------------------
+
+model Quote {
+  id           String      @id @default(cuid())
+  name         String
+  company      String?
+  email        String
+  phone        String?
+  whatsapp     String?
+  city         String?
+  state        String?
+  projectType  String?
+  deadline     String?
+  budgetRange  String?
+  message      String      @db.Text
+  status       QuoteStatus @default(RECEIVED)
+  files        QuoteFile[]
+  leadId       String?
+  lead         Lead?       @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  source       String?     @default("site")
+  utm          Json?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model QuoteFile {
+  id        String   @id @default(cuid())
+  quoteId   String
+  quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  url       String
+  name      String
+  size      Int
+  mimeType  String
+  createdAt DateTime @default(now())
+}
+
+model Message {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  body      String        @db.Text
+  status    MessageStatus @default(UNREAD)
+  source    String?       @default("contact-form")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model Lead {
+  id         String     @id @default(cuid())
+  name       String
+  email      String?
+  phone      String?
+  company    String?
+  status     LeadStatus @default(NEW)
+  value      Int?       // valor estimado em centavos
+  source     String?
+  ownerName  String?
+  notes      LeadNote[]
+  quotes     Quote[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([status])
+}
+
+model LeadNote {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  authorName String?
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([leadId, createdAt])
+}
+
+// ----------------------------------------------------------------------------
+//  SEO
+// ----------------------------------------------------------------------------
+
+/// Overrides de SEO por rota OU vinculado a uma entidade (Project/Post/Service...).
+model SeoMeta {
+  id             String   @id @default(cuid())
+  path           String?  @unique // "/", "/portfolio", null se vinculado a entidade
+  title          String?
+  description    String?
+  keywords       String[] @default([])
+  canonicalUrl   String?
+  robots         String?  @default("index,follow")
+  ogTitle        String?
+  ogDescription  String?
+  ogImageUrl     String?
+  ogType         String?  @default("website")
+  twitterCard    String?  @default("summary_large_image")
+  twitterSite    String?
+  structuredData Json?    // JSON-LD schema.org
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+
+  project      Project?
+  post         Post?
+  service      Service?
+  landingPage  LandingPage?
+}
+
+// ----------------------------------------------------------------------------
+//  BANNERS / POPUPS / CTA
+// ----------------------------------------------------------------------------
+
+model Banner {
+  id         String          @id @default(cuid())
+  title      String
+  text       String?
+  imageUrl   String?
+  linkHref   String?
+  linkLabel  String?
+  placement  BannerPlacement @default(TOPBAR)
+  bgColor    String?
+  textColor  String?
+  enabled    Boolean         @default(true)
+  startsAt   DateTime?
+  endsAt     DateTime?
+  order      Int             @default(0)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model Popup {
+  id           String       @id @default(cuid())
+  name         String
+  title        String?
+  content      Json
+  imageUrl     String?
+  ctaLabel     String?
+  ctaHref      String?
+  trigger      PopupTrigger @default(ON_DELAY)
+  delaySeconds Int          @default(6)
+  scrollPercent Int         @default(50)
+  frequency    String       @default("once-per-session") // once | once-per-session | always
+  enabled      Boolean      @default(false)
+  startsAt     DateTime?
+  endsAt       DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Cta {
+  id        String     @id @default(cuid())
+  key       String     @unique // "home-final", "portfolio-footer"...
+  eyebrow   String?
+  title     String
+  subtitle  String?
+  primaryLabel String?
+  primaryHref  String?
+  secondaryLabel String?
+  secondaryHref  String?
+  variant   CtaVariant @default(GRADIENT)
+  enabled   Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+// ----------------------------------------------------------------------------
+//  MÍDIAS / ARQUIVOS / BACKUP / LOGS / ANALYTICS
+// ----------------------------------------------------------------------------
+
+model MediaFolder {
+  id        String        @id @default(cuid())
+  name      String
+  path      String        @unique // "/", "/projetos", "/blog"
+  parentId  String?
+  parent    MediaFolder?  @relation("FolderTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children  MediaFolder[] @relation("FolderTree")
+  assets    MediaAsset[]
+  createdAt DateTime      @default(now())
+}
+
+model MediaAsset {
+  id         String       @id @default(cuid())
+  folderId   String?
+  folder     MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  name       String
+  url        String
+  type       MediaType    @default(IMAGE)
+  mimeType   String
+  size       Int
+  width      Int?
+  height     Int?
+  alt        String?
+  blurhash   String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([folderId])
+  @@index([type])
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String   // "project.create", "settings.update"...
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model BackupRecord {
+  id        String   @id @default(cuid())
+  filename  String
+  url       String?
+  size      Int?
+  status    String   @default("pending") // pending | done | failed
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  name      String   // "pageview", "cta_click", "quote_submit"
+  path      String?
+  referrer  String?
+  sessionId String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([name, createdAt])
+  @@index([path])
+}
