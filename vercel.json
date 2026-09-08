@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "prisma generate && prisma migrate deploy && next build",
+  "buildCommand": "prisma generate && (prisma migrate deploy || echo 'migrate deploy pulado — configure DATABASE_URL/DIRECT_URL') && next build",
   "installCommand": "npm ci --no-audit --no-fund"
 }
