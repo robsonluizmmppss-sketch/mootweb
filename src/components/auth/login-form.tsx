@@ -91,10 +91,6 @@ export function LoginForm() {
         {pending ? <Loader2 className="size-4 animate-spin" /> : <LogIn className="size-4" />}
         Entrar no painel
       </Button>
-
-      <p className="rounded-lg bg-white/[0.03] px-3 py-2 text-center text-xs text-muted-foreground">
-        Demo: <span className="text-foreground">admin@mootweb.online</span> / mootweb123
-      </p>
     </form>
   );
 }
